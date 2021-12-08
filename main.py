@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import Updater, CallbackContext, MessageHandler, Filters, BaseFilter
 
 TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
-WELCOME = open('welcome.m4a', 'rb')
+WELCOME = open('welcome.ogg', 'rb')
 WELCOME_CAPTION = "Vrrrrr'ELcome! 😸"
 
 updater = Updater(TELEGRAM_TOKEN)
@@ -28,7 +28,7 @@ def _on_message(update: Update, _context: CallbackContext):
             update.message.chat.type,
             update.message.chat.title,
             update.message.chat_id)
-        update.message.reply_audio(WELCOME, quote=True, caption=WELCOME_CAPTION)
+        update.message.reply_voice(WELCOME, quote=True, caption=WELCOME_CAPTION)
 
 
 def main():
