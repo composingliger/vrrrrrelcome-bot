@@ -1,14 +1,23 @@
 import logging
 import os
 
+import telegram
 from telegram import Update
-from telegram.ext import Updater, CallbackContext, MessageHandler, Filters, BaseFilter
+from telegram.ext import Updater, CallbackContext, MessageHandler, Filters, BaseFilter, CommandHandler
 
 TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
-WELCOME = open('welcome.ogg', 'rb')
+WELCOME = 'welcome.ogg'
 WELCOME_CAPTION = "Vrrrrr'ELcome! 😸"
 
 updater = Updater(TELEGRAM_TOKEN)
+updater.bot.set_my_commands([('start', 'Start interacting with this bot')], scope=telegram.BotCommandScopeAllPrivateChats())
+
+
+def command_handler(command, **kwargs):
+    """Decorator for registering a `CommandHandler`."""
+    def _register(func):
+        updater.dispatcher.add_handler(CommandHandler(command, func, **kwargs))
+    return _register
 
 
 def message_handler(filter: BaseFilter, **kwargs):
@@ -16,6 +25,15 @@ def message_handler(filter: BaseFilter, **kwargs):
     def _register(func):
         updater.dispatcher.add_handler(MessageHandler(filter, func, **kwargs))
     return _register
+
+
+@command_handler('start', filters=Filters.chat_type.private)
+def _start(update: Update, _context: CallbackContext):
+    first_name = update.message.from_user.first_name
+    update.message.reply_text(f'Hi {first_name}! To use me, just invite me to your group!')
+    update.message.reply_text('I\'ll send this reply to all new users who join the group:')
+    with open(WELCOME, 'rb') as f:
+        update.message.reply_voice(f, quote=True, caption=WELCOME_CAPTION)
 
 
 @message_handler(Filters.status_update.new_chat_members)
@@ -28,7 +46,9 @@ def _on_message(update: Update, _context: CallbackContext):
             update.message.chat.type,
             update.message.chat.title,
             update.message.chat_id)
-        update.message.reply_voice(WELCOME, quote=True, caption=WELCOME_CAPTION)
+
+    with open(WELCOME, 'rb') as f:
+        update.message.reply_voice(f, quote=True, caption=WELCOME_CAPTION)
 
 
 def main():
