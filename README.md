@@ -1,5 +1,7 @@
 # vrrrrrelcome-bot
 
+![image](https://user-images.githubusercontent.com/67404553/145514823-37048f6e-c71e-4bfe-b919-a591fbb0b5ea.png)
+
 Telegram Bot that sends the [classic Furcadia "welcome"](https://youtu.be/TrR9YKOeZA0) when a new user joins a chat.
 
 ## How to use
