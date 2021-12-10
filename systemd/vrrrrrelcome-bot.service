@@ -1,0 +1,12 @@
+[Unit]
+Description=Telegram bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+DynamicUser=yes
+EnvironmentFile=/etc/vrrrrrelcome-bot.conf
+ExecStart=/usr/local/bin/vrrrrrelcome-bot
+
+[Install]
+WantedBy=multi-user.target

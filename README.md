@@ -27,5 +27,5 @@ Simply invite [`@vrrrrrelcome_bot`](https://t.me/vrrrrrelcome_bot) to your Teleg
 4. Start the bot using the newly minted token:
    ```
    set TELEGRAM_TOKEN=...
-   python main.py
+   python vrrrrrelcome-bot
    ```
