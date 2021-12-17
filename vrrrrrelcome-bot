@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Vrrrrr'ELcome bot!
 
+import datetime
 import logging
 import os
 
@@ -12,6 +13,11 @@ TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
 DATA_DIR = os.environ.get('DATA_DIR', '.')
 WELCOME = os.path.join(DATA_DIR, 'data/welcome.ogg')
 WELCOME_CAPTION = "Vrrrrr'ELcome! 😸"
+RECENT_DURATION = datetime.timedelta(minutes=10)
+CLEANUP_PERIOD = datetime.timedelta(seconds=30)
+
+# Recently sent messages
+RECENT_MESSAGES = []
 
 updater = Updater(TELEGRAM_TOKEN)
 updater.bot.set_my_commands([('start', 'Start interacting with this bot')], scope=telegram.BotCommandScopeAllPrivateChats())
@@ -33,30 +39,56 @@ def message_handler(filter: BaseFilter, **kwargs):
 
 @command_handler('start', filters=Filters.chat_type.private)
 def _start(update: Update, _context: CallbackContext):
+    """Handle /start command"""
     first_name = update.message.from_user.first_name
     update.message.reply_text(f'Hi {first_name}! To use me, just invite me to your group!')
     update.message.reply_text('I\'ll send this reply to all new users who join the group:')
+
     with open(WELCOME, 'rb') as f:
         update.message.reply_voice(f, quote=True, caption=WELCOME_CAPTION)
 
 
 @message_handler(Filters.status_update.new_chat_members)
-def _on_message(update: Update, _context: CallbackContext):
-    if update.message and update.message.new_chat_members:
-        # Send "Vrrrrr'elcome!" when a new user joins the chat
-        logging.info(
-            'Sent WELCOME to %s in %s %r (%d)',
-            ', '.join(f'{u.username!r} ({u.id})' for u in update.message.new_chat_members),
-            update.message.chat.type,
-            update.message.chat.title,
-            update.message.chat_id)
+def _on_new_chat_members(update: Update, _context: CallbackContext):
+    """Send "Vrrrrr'elcome!" when a new user joins the chat"""
+    logging.info(
+        'Sent WELCOME to %s in %s %r (%d)',
+        ', '.join(f'{u.username!r} ({u.id})' for u in update.message.new_chat_members),
+        update.message.chat.type,
+        update.message.chat.title,
+        update.message.chat_id)
 
     with open(WELCOME, 'rb') as f:
-        update.message.reply_voice(f, quote=True, caption=WELCOME_CAPTION)
+        message = update.message.reply_voice(f, quote=True, caption=WELCOME_CAPTION)
+        uids = {u.id for u in update.message.new_chat_members}
+        RECENT_MESSAGES.append((uids, message))
+
+
+@message_handler(Filters.status_update.left_chat_member)
+def _on_left_chat_member(update: Update, _context: CallbackContext):
+    """Remove "Vrrrrr'elcome!" if user leaves early"""
+    uid = update.message.left_chat_member.id
+
+    for uids, message in RECENT_MESSAGES:
+        if uid in uids:
+            uids.remove(uid)
+
+        if not uids:
+            # All users referenced in this message have left the chat!
+            logging.info('Removing message %d', message.message_id)
+            message.delete()
+
+
+def cleanup_recent_messages(context):
+    """Forget about old messages"""
+    now = datetime.datetime.now(datetime.timezone.utc)
+    RECENT_MESSAGES[:] = [(u, m) for u, m in RECENT_MESSAGES if now - m.date < RECENT_DURATION]
 
 
 def main():
     logging.basicConfig(level=logging.INFO)
+
+    updater.job_queue.run_repeating(cleanup_recent_messages, CLEANUP_PERIOD)
 
     updater.start_polling()
     updater.idle()
