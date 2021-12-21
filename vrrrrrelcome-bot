@@ -13,7 +13,7 @@ from telegram.ext import Updater, CallbackContext, MessageHandler, Filters, Base
 TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
 DATA_DIR = os.environ.get('DATA_DIR', '.')
 WELCOME = os.path.join(DATA_DIR, 'data/welcome.ogg')
-WELCOME_CAPTION = "Vrrrrr'ELcome! 😸"
+WELCOME_CAPTION = "_Vrrrrr_'ELcome\\! 😸"
 RECENT_DURATION = datetime.timedelta(minutes=8)
 CLEANUP_PERIOD = datetime.timedelta(seconds=35)
 
@@ -45,24 +45,30 @@ def _start(update: Update, _context: CallbackContext):
     update.message.reply_text(f'Hi {first_name}! To use me, just invite me to your group!')
     update.message.reply_text('I\'ll send this reply to all new users who join the group:')
 
-    with open(WELCOME, 'rb') as f:
-        update.message.reply_voice(f, quote=True, caption=WELCOME_CAPTION)
+    logging.info('Sending WELCOME to %s (%d)', update.message.from_user.username, update.message.from_user.id)
+
+    reply_welcome(update.message)
 
 
 @message_handler(Filters.status_update.new_chat_members)
 def _on_new_chat_members(update: Update, _context: CallbackContext):
     """Send "Vrrrrr'elcome!" when a new user joins the chat"""
     logging.info(
-        'Sent WELCOME to %s in %s %r (%d)',
+        'Sending WELCOME to %s in %s %r (%d)',
         ', '.join(f'{u.username!r} ({u.id})' for u in update.message.new_chat_members),
         update.message.chat.type,
         update.message.chat.title,
         update.message.chat_id)
 
+    message = reply_welcome(update.message)
+    uids = {u.id for u in update.message.new_chat_members}
+    RECENT_MESSAGES.append((uids, message))
+
+
+def reply_welcome(message: telegram.Message):
+    """Send "Vrrrrr'elcome!" reply to message"""
     with open(WELCOME, 'rb') as f:
-        message = update.message.reply_voice(f, quote=True, caption=WELCOME_CAPTION)
-        uids = {u.id for u in update.message.new_chat_members}
-        RECENT_MESSAGES.append((uids, message))
+        return message.reply_voice(f, quote=True, caption=WELCOME_CAPTION, parse_mode='MarkdownV2')
 
 
 @message_handler(Filters.status_update.left_chat_member)
