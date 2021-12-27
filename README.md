@@ -1,6 +1,6 @@
 # vrrrrrelcome-bot
 
-![image](https://user-images.githubusercontent.com/67404553/145514823-37048f6e-c71e-4bfe-b919-a591fbb0b5ea.png)
+![Vrrrrr'ELCOME bot!](https://user-images.githubusercontent.com/67404553/147509116-b4fec164-aa60-4b79-bf12-a14458f45ba1.png)
 
 Telegram Bot that sends the [classic Furcadia "welcome"](https://youtu.be/TrR9YKOeZA0) when a new user joins a chat.
 
@@ -8,7 +8,7 @@ Telegram Bot that sends the [classic Furcadia "welcome"](https://youtu.be/TrR9YK
 
 Simply invite [`@vrrrrrelcome_bot`](https://t.me/vrrrrrelcome_bot) to your Telegram channel and it will automatically start welcoming new users.
 
-> Vrrrrr'ELcome! 😸
+![Vrrrrr'ELCOME! 😸](https://user-images.githubusercontent.com/67404553/145514823-37048f6e-c71e-4bfe-b919-a591fbb0b5ea.png)
 
 ## How to run your own bot
 
