@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Vrrrrr'ELcome bot!
+# Vrrrr'ELCOME bot!
 
 import collections
 import datetime
@@ -16,7 +16,7 @@ DATA_DIR = os.environ.get('DATA_DIR', '.')
 WELCOME_STICKER = 'CAACAgEAAxkBAAEDkithyh9aAAFwZEd-9pH21_Xcwom75wMAAhQCAAKi_lBGS70gXpVwuZYjBA'
 # Voice: data/welcome.ogg
 WELCOME_VOICE = 'AwACAgEAAxkDAAO2YcovGdewbOu3QLRMgwdnQonKBNMAAt4BAAIbp1BGC0iZ8hr2NuUjBA'
-WELCOME_CAPTION = "_Vrrrrr_'ELcome\\! 😸"
+WELCOME_CAPTION = "_Vrrrr_'ELCOME\\! 😸"
 RECENT_DURATION = datetime.timedelta(minutes=6)
 CLEANUP_PERIOD = datetime.timedelta(seconds=37)
 
@@ -69,7 +69,7 @@ def _on_new_chat_members(update: Update, _context: CallbackContext):
 
 
 def reply_welcome(message: telegram.Message):
-    """Send "Vrrrrr'elcome!" reply to message"""
+    """Send WELCOME reply to message"""
     return [
         message.reply_sticker(WELCOME_STICKER),
         message.reply_voice(WELCOME_VOICE, quote=True, caption=WELCOME_CAPTION, parse_mode='MarkdownV2')
@@ -78,7 +78,7 @@ def reply_welcome(message: telegram.Message):
 
 @message_handler(Filters.status_update.left_chat_member)
 def _on_left_chat_member(update: Update, _context: CallbackContext):
-    """Remove "Vrrrrr'elcome!" if user leaves early"""
+    """Remove WELCOME if user leaves early"""
     uid = update.message.left_chat_member.id
 
     for uids, message in RECENT_MESSAGES:
