@@ -16,8 +16,8 @@ DATA_DIR = os.environ.get('DATA_DIR', '.')
 WELCOME_STICKER = 'CAACAgEAAxkBAAEDkithyh9aAAFwZEd-9pH21_Xcwom75wMAAhQCAAKi_lBGS70gXpVwuZYjBA'
 WELCOME = os.path.join(DATA_DIR, 'data/welcome.ogg')
 WELCOME_CAPTION = "_Vrrrrr_'ELcome\\! 😸"
-RECENT_DURATION = datetime.timedelta(minutes=8)
-CLEANUP_PERIOD = datetime.timedelta(seconds=35)
+RECENT_DURATION = datetime.timedelta(minutes=6)
+CLEANUP_PERIOD = datetime.timedelta(seconds=37)
 
 # Queue of recently sent messages
 RECENT_MESSAGES = collections.deque()
