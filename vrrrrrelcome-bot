@@ -12,6 +12,8 @@ from telegram.ext import Updater, CallbackContext, MessageHandler, Filters, Base
 
 TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
 DATA_DIR = os.environ.get('DATA_DIR', '.')
+# Sticker: https://t.me/addstickers/vrrrrrelcomebot 👋
+WELCOME_STICKER = 'CAACAgEAAxkBAAEDkithyh9aAAFwZEd-9pH21_Xcwom75wMAAhQCAAKi_lBGS70gXpVwuZYjBA'
 WELCOME = os.path.join(DATA_DIR, 'data/welcome.ogg')
 WELCOME_CAPTION = "_Vrrrrr_'ELcome\\! 😸"
 RECENT_DURATION = datetime.timedelta(minutes=8)
@@ -60,15 +62,19 @@ def _on_new_chat_members(update: Update, _context: CallbackContext):
         update.message.chat.title,
         update.message.chat_id)
 
-    message = reply_welcome(update.message)
-    uids = {u.id for u in update.message.new_chat_members}
-    RECENT_MESSAGES.append((uids, message))
+    for message in reply_welcome(update.message):
+        uids = {u.id for u in update.message.new_chat_members}
+        RECENT_MESSAGES.append((uids, message))
 
 
 def reply_welcome(message: telegram.Message):
     """Send "Vrrrrr'elcome!" reply to message"""
+    messages = [message.reply_sticker(WELCOME_STICKER)]
+
     with open(WELCOME, 'rb') as f:
-        return message.reply_voice(f, quote=True, caption=WELCOME_CAPTION, parse_mode='MarkdownV2')
+        messages.append(message.reply_voice(f, quote=True, caption=WELCOME_CAPTION, parse_mode='MarkdownV2'))
+
+    return messages
 
 
 @message_handler(Filters.status_update.left_chat_member)
