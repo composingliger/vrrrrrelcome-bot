@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # Vrrrr'ELCOME bot!
 
-import collections
 import datetime
 import logging
 import os
+from typing import Set, List
 
 import telegram
 from telegram import Update
@@ -18,10 +18,6 @@ WELCOME_STICKER = 'CAACAgEAAxkBAAEDkithyh9aAAFwZEd-9pH21_Xcwom75wMAAhQCAAKi_lBGS
 WELCOME_VOICE = 'AwACAgEAAxkDAAO2YcovGdewbOu3QLRMgwdnQonKBNMAAt4BAAIbp1BGC0iZ8hr2NuUjBA'
 WELCOME_CAPTION = "_Vrrrr_'ELCOME\\! 😸"
 RECENT_DURATION = datetime.timedelta(minutes=6)
-CLEANUP_PERIOD = datetime.timedelta(seconds=37)
-
-# Queue of recently sent messages
-RECENT_MESSAGES = collections.deque()
 
 updater = Updater(TELEGRAM_TOKEN)
 updater.bot.set_my_commands([('start', 'Start interacting with this bot')], scope=telegram.BotCommandScopeAllPrivateChats())
@@ -63,9 +59,9 @@ def _on_new_chat_members(update: Update, _context: CallbackContext):
         update.message.chat.title,
         update.message.chat_id)
 
-    for message in reply_welcome(update.message):
-        uids = {u.id for u in update.message.new_chat_members}
-        RECENT_MESSAGES.append((uids, message))
+    messages = reply_welcome(update.message)
+    uids = {u.id for u in update.message.new_chat_members}
+    schedule_cleanup(update.message.chat, messages, uids)
 
 
 def reply_welcome(message: telegram.Message):
@@ -76,41 +72,27 @@ def reply_welcome(message: telegram.Message):
     ]
 
 
-@message_handler(Filters.status_update.left_chat_member)
-def _on_left_chat_member(update: Update, _context: CallbackContext):
-    """Remove WELCOME if user leaves early"""
-    uid = update.message.left_chat_member.id
+def schedule_cleanup(chat: telegram.Chat, messages: List[telegram.Message], uids: Set[int]):
+    """Schedule cleanup of unneeded messages"""
+    uids = uids.copy()
 
-    for uids, message in RECENT_MESSAGES:
-        if uid in uids:
-            uids.remove(uid)
-
-        if not uids:
-            # All users referenced in this message have left the chat!
-            logging.info('Removing message %d (all users left)', message.message_id)
-            message.delete()
-
-
-def cleanup_recent_messages(context):
-    """Forget about old messages"""
-    now = datetime.datetime.now(datetime.timezone.utc)
-    while RECENT_MESSAGES and now - RECENT_MESSAGES[0][1].date > RECENT_DURATION:
-        uids, message = RECENT_MESSAGES.popleft()
+    def _cleanup(_context):
         for uid in list(uids):
-            chat_member = message.chat.get_member(uid)
+            chat_member = chat.get_member(uid)
             if chat_member.status in {telegram.ChatMember.KICKED, telegram.ChatMember.LEFT}:
                 uids.remove(uid)
 
         if not uids:
             # All users referenced in this message have left the chat!
-            logging.info('Removing message %d (all users left)', message.message_id)
-            message.delete()
+            for message in messages:
+                logging.info('Removing message %d (all users left)', message.message_id)
+                message.delete()
+
+    updater.job_queue.run_once(_cleanup, RECENT_DURATION)
 
 
 def main():
     logging.basicConfig(level=logging.INFO)
-
-    updater.job_queue.run_repeating(cleanup_recent_messages, CLEANUP_PERIOD)
 
     updater.start_polling()
     updater.idle()
