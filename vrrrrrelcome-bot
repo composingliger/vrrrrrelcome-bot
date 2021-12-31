@@ -6,6 +6,7 @@ import logging
 import os
 from typing import Set, List
 
+import pytz
 import telegram
 from telegram import Update
 from telegram.ext import Updater, CallbackContext, MessageHandler, Filters, BaseFilter, CommandHandler
@@ -91,8 +92,39 @@ def schedule_cleanup(chat: telegram.Chat, messages: List[telegram.Message], uids
     updater.job_queue.run_once(_cleanup, RECENT_DURATION)
 
 
+def schedule_message(when, chat_id, message, **kwargs):
+    """Send a message at a scheduled time"""
+    def _message(_context):
+        updater.bot.send_message(chat_id, message, **kwargs)
+
+    updater.job_queue.run_once(_message, when)
+
+
+def schedule_sticker(when, chat_id, sticker, **kwargs):
+    """Send a message at a scheduled time"""
+    def _message(_context):
+        updater.bot.send_sticker(chat_id, sticker, **kwargs)
+
+    updater.job_queue.run_once(_message, when)
+
+
 def main():
     logging.basicConfig(level=logging.INFO)
+
+    midnight = datetime.datetime(2021, 12, 31, 13, 0, tzinfo=pytz.utc)  # Midnight Australia/Melbourne
+    chat_id = -1001327561522  # CARNI🐊ART chat
+    schedule_message(midnight - datetime.timedelta(seconds=10), chat_id, "Ten!")
+    schedule_message(midnight - datetime.timedelta(seconds=9), chat_id, "Nine!")
+    schedule_message(midnight - datetime.timedelta(seconds=8), chat_id, "Eight!")
+    schedule_message(midnight - datetime.timedelta(seconds=7), chat_id, "Seven!")
+    schedule_message(midnight - datetime.timedelta(seconds=6), chat_id, "Six!")
+    schedule_message(midnight - datetime.timedelta(seconds=5), chat_id, "Five!")
+    schedule_message(midnight - datetime.timedelta(seconds=4), chat_id, "Four!")
+    schedule_message(midnight - datetime.timedelta(seconds=3), chat_id, "Three!")
+    schedule_message(midnight - datetime.timedelta(seconds=2), chat_id, "Two!")
+    schedule_message(midnight - datetime.timedelta(seconds=1), chat_id, "One!")
+    schedule_message(midnight - datetime.timedelta(seconds=0), chat_id, "Happy New Year! 🥳")
+    schedule_sticker(midnight - datetime.timedelta(seconds=0), chat_id, "CAACAgIAAxkBAAEDlwJhzrhCwNNc0e1WdU8pkbJIIMIRiAAClwMAAj-VzAqjs4NsRtSqZyME")
 
     updater.start_polling()
     updater.idle()
