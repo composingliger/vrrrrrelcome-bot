@@ -15,7 +15,7 @@ DATA_DIR = os.environ.get('DATA_DIR', '.')
 # Sticker: https://t.me/addstickers/vrrrrrelcomebot 👋
 WELCOME_STICKER = 'CAACAgEAAxkBAAEDkithyh9aAAFwZEd-9pH21_Xcwom75wMAAhQCAAKi_lBGS70gXpVwuZYjBA'
 # Voice: data/welcome.ogg
-WELCOME_VOICE = 'AwACAgEAAxkDAAO2YcovGdewbOu3QLRMgwdnQonKBNMAAt4BAAIbp1BGC0iZ8hr2NuUjBA'
+WELCOME_VOICE = 'AwACAgEAAxkDAAIBHGO-Qi_5GCEfG_ep6-IH-aTxS3hQAALNBAACkVT4RaAPWsx_u4ClLQQ'
 WELCOME_CAPTION = "_Vrrrr_'ELCOME\\! 😸"
 RECENT_DURATION = datetime.timedelta(minutes=6)
 
