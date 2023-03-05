@@ -7,7 +7,7 @@ import os
 from typing import Set, List
 
 import telegram
-from telegram import Update, ChatMember
+from telegram import Update, ChatMember, ParseMode
 from telegram.ext import Updater, CallbackContext, MessageHandler, Filters, BaseFilter, CommandHandler
 
 TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
@@ -16,7 +16,7 @@ DATA_DIR = os.environ.get('DATA_DIR', '.')
 WELCOME_STICKER = 'CAACAgEAAxkBAAEDkithyh9aAAFwZEd-9pH21_Xcwom75wMAAhQCAAKi_lBGS70gXpVwuZYjBA'
 # Voice: data/welcome.ogg
 WELCOME_VOICE = 'AwACAgEAAxkDAAIBHGO-Qi_5GCEfG_ep6-IH-aTxS3hQAALNBAACkVT4RaAPWsx_u4ClLQQ'
-WELCOME_CAPTION = "_Vrrrr_'ELCOME\\! 😸"
+WELCOME_CAPTION = "<i>Vrrrr</i> 'ELCOME! 😸"
 RECENT_DURATION = datetime.timedelta(minutes=6)
 CHAT_MEMBER_ADMINISTRATORS = {ChatMember.CREATOR, ChatMember.ADMINISTRATOR}
 CHAT_MEMBER_GONERS = {telegram.ChatMember.KICKED, telegram.ChatMember.LEFT}
@@ -86,7 +86,7 @@ def reply_welcome(message: telegram.Message):
     """Send WELCOME reply to message"""
     return [
         message.reply_sticker(WELCOME_STICKER),
-        message.reply_voice(WELCOME_VOICE, quote=True, caption=WELCOME_CAPTION, parse_mode='MarkdownV2')
+        message.reply_voice(WELCOME_VOICE, quote=True, caption=WELCOME_CAPTION, parse_mode=ParseMode.HTML)
     ]
 
 
@@ -105,6 +105,11 @@ def schedule_cleanup(chat: telegram.Chat, messages: List[telegram.Message], uids
             for message in messages:
                 logging.info('Removing message %d (all users left)', message.message_id)
                 message.delete()
+
+            chat.send_message(
+                '<i>"Well, <b>thief!</b> I smell you, I hear your breath, I feel your air. Where are you?"</i> 🐲',
+                parse_mode=ParseMode.HTML,
+                disable_notification=True)
 
     updater.job_queue.run_once(_cleanup, RECENT_DURATION)
 
