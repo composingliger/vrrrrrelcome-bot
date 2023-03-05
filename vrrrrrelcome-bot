@@ -7,7 +7,7 @@ import os
 from typing import Set, List
 
 import telegram
-from telegram import Update
+from telegram import Update, ChatMember
 from telegram.ext import Updater, CallbackContext, MessageHandler, Filters, BaseFilter, CommandHandler
 
 TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
@@ -18,6 +18,8 @@ WELCOME_STICKER = 'CAACAgEAAxkBAAEDkithyh9aAAFwZEd-9pH21_Xcwom75wMAAhQCAAKi_lBGS
 WELCOME_VOICE = 'AwACAgEAAxkDAAIBHGO-Qi_5GCEfG_ep6-IH-aTxS3hQAALNBAACkVT4RaAPWsx_u4ClLQQ'
 WELCOME_CAPTION = "_Vrrrr_'ELCOME\\! 😸"
 RECENT_DURATION = datetime.timedelta(minutes=6)
+CHAT_MEMBER_ADMINISTRATORS = {ChatMember.CREATOR, ChatMember.ADMINISTRATOR}
+CHAT_MEMBER_GONERS = {telegram.ChatMember.KICKED, telegram.ChatMember.LEFT}
 
 updater = Updater(TELEGRAM_TOKEN)
 updater.bot.set_my_commands([('start', 'Start interacting with this bot')], scope=telegram.BotCommandScopeAllPrivateChats())
@@ -40,24 +42,40 @@ def message_handler(filter: BaseFilter, **kwargs):
 @command_handler('start', filters=Filters.chat_type.private)
 def _start(update: Update, _context: CallbackContext):
     """Handle /start command"""
-    first_name = update.message.from_user.first_name
-    update.message.reply_text(f'Hi {first_name}! To use me, just invite me to your group!')
+    user = update.effective_user
+    update.message.reply_text(f'Hi {user.first_name}! To use me, just invite me to your group!')
     update.message.reply_text('I\'ll send this reply to all new users who join the group:')
 
-    logging.info('Sending WELCOME to %s (%d)', update.message.from_user.username, update.message.from_user.id)
+    logging.info('Sending WELCOME to %s (%d)', user.username, user.id)
 
     reply_welcome(update.message)
+
+
+@command_handler('hogarth')
+def _hogarth(update: Update, _context: CallbackContext):
+    """Handle /hogarth command"""
+    user = update.effective_user
+    chat = update.effective_chat
+    if chat.type != 'private' and chat.get_member(user.id).status not in CHAT_MEMBER_ADMINISTRATORS:
+        logging.warning('%s (%d) tried to use /hogarth admin command in %s (%d)', user.username, user.id, chat.username, chat.id)
+        return
+
+    update.message.chat.send_message('''M.C.A Hogarth is a SERIOUSLY rad Author!!
+The first book in their Dreamhealers series is a great place to start! ❤️
+
+It's free, amazing and you are welcome: https://www.goodreads.com/book/show/19455735-mindtouch''')
 
 
 @message_handler(Filters.status_update.new_chat_members)
 def _on_new_chat_members(update: Update, _context: CallbackContext):
     """Send "Vrrrrr'elcome!" when a new user joins the chat"""
+    chat = update.effective_chat
     logging.info(
         'Sending WELCOME to %s in %s %r (%d)',
         ', '.join(f'{u.username!r} ({u.id})' for u in update.message.new_chat_members),
-        update.message.chat.type,
-        update.message.chat.title,
-        update.message.chat_id)
+        chat.type,
+        chat.title,
+        chat.id)
 
     messages = reply_welcome(update.message)
     uids = {u.id for u in update.message.new_chat_members}
@@ -79,7 +97,7 @@ def schedule_cleanup(chat: telegram.Chat, messages: List[telegram.Message], uids
     def _cleanup(_context):
         for uid in list(uids):
             chat_member = chat.get_member(uid)
-            if chat_member.status in {telegram.ChatMember.KICKED, telegram.ChatMember.LEFT}:
+            if chat_member.status in CHAT_MEMBER_GONERS:
                 uids.remove(uid)
 
         if not uids:
