@@ -4,6 +4,7 @@
 import datetime
 import logging
 import os
+import textwrap
 from typing import Set, List
 
 import telegram
@@ -51,6 +52,38 @@ def _start(update: Update, _context: CallbackContext):
     reply_welcome(update.message)
 
 
+@command_handler('brushes')
+def _brushes(update: Update, _context: CallbackContext):
+    """Handle /brushes command"""
+    user = update.effective_user
+    chat = update.effective_chat
+    if chat.type != 'private' and chat.get_member(user.id).status not in CHAT_MEMBER_ADMINISTRATORS:
+        logging.warning('%s (%d) tried to use /brushes admin command in %s (%d)', user.username, user.id, chat.username, chat.id)
+        return
+
+    update.message.chat.send_message(textwrap.dedent('''\
+        Want to see the bushes Carni uses to draw all of their amazing artwork, go here and it will all be elucidated 😄
+
+        https://www.deviantart.com/carnival/art/B-B-B-BRUSH-MAGEDDON-726046698 🖌️
+        '''))
+
+
+@command_handler('freeapple')
+def _freeapple(update: Update, _context: CallbackContext):
+    """Handle /freeapple command"""
+    user = update.effective_user
+    chat = update.effective_chat
+    if chat.type != 'private' and chat.get_member(user.id).status not in CHAT_MEMBER_ADMINISTRATORS:
+        logging.warning('%s (%d) tried to use /freeapple admin command in %s (%d)', user.username, user.id, chat.username, chat.id)
+        return
+
+    update.message.chat.send_message(textwrap.dedent('''\
+        A reference you <i>saaaaaay</i>?
+
+        Here is Free Apple since we reference it so often this is needed https://www.youtube.com/watch?v=_F9EMbkvLBQ 🍎
+    '''), parse_mode=ParseMode.HTML)
+
+
 @command_handler('hogarth')
 def _hogarth(update: Update, _context: CallbackContext):
     """Handle /hogarth command"""
@@ -60,10 +93,30 @@ def _hogarth(update: Update, _context: CallbackContext):
         logging.warning('%s (%d) tried to use /hogarth admin command in %s (%d)', user.username, user.id, chat.username, chat.id)
         return
 
-    update.message.chat.send_message('''M.C.A Hogarth is a SERIOUSLY rad Author!!
-The first book in their Dreamhealers series is a great place to start! ❤️
+    update.message.chat.send_message(textwrap.dedent('''\
+        M.C.A Hogarth is a SERIOUSLY rad Author!!
+        The first book in their Dreamhealers series is a great place to start! ❤️
 
-It's free, amazing and you are welcome: https://www.goodreads.com/book/show/19455735-mindtouch''')
+        It's free, amazing and you are welcome: https://www.goodreads.com/book/show/19455735-mindtouch
+        '''))
+
+
+@command_handler('twrp')
+def _twrp(update: Update, _context: CallbackContext):
+    """Handle /twrp command"""
+    user = update.effective_user
+    chat = update.effective_chat
+    if chat.type != 'private' and chat.get_member(user.id).status not in CHAT_MEMBER_ADMINISTRATORS:
+        logging.warning('%s (%d) tried to use /twrp admin command in %s (%d)', user.username, user.id, chat.username, chat.id)
+        return
+
+    update.message.chat.send_message(textwrap.dedent('''\
+        YA'LL HAVE GON' n DONE IT now!
+        GON' N SAID THE MAGIC WORK!
+        <b>TWRP</b> (or 'Tupperware Remix Party') just so happens to be, the BESTEREST Band to ever exist, and can check out <a href="https://twrp.bandcamp.com">thier music here!</a>
+
+        (can highly reccomend <a href="https://twrp.bandcamp.com/track/phantom-racer-feat-the-protomen">this UTTER BANGER</a> to start with!) ❤️
+    '''), parse_mode=ParseMode.HTML)
 
 
 @message_handler(Filters.status_update.new_chat_members)
