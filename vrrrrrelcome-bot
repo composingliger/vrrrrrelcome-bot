@@ -21,7 +21,6 @@ WELCOME_STICKER = 'CAACAgEAAxkBAAEDkithyh9aAAFwZEd-9pH21_Xcwom75wMAAhQCAAKi_lBGS
 WELCOME_VOICE = 'AwACAgEAAxkDAAIBHGO-Qi_5GCEfG_ep6-IH-aTxS3hQAALNBAACkVT4RaAPWsx_u4ClLQQ'
 WELCOME_CAPTION = "<i>Vrrrr</i> 'ELCOME! 😸"
 RECENT_DURATION = datetime.timedelta(minutes=6)
-CHAT_MEMBER_ADMINISTRATORS = {ChatMember.OWNER, ChatMember.ADMINISTRATOR}
 CHAT_MEMBER_GONERS = {telegram.ChatMember.BANNED, telegram.ChatMember.LEFT}
 
 
@@ -43,28 +42,39 @@ def message_handler(filter: BaseFilter, **kwargs):
     return _register
 
 
+async def is_chat_admin(update: Update):
+    """Check if update is from chat admin"""
+    user = update.effective_user
+    chat = update.effective_chat
+
+    if chat.type == 'private':
+        return True
+
+    return user.id in (admin.user.id for admin in await chat.get_administrators())
+
 @command_handler('start', filters=ChatType.PRIVATE)
-def _start(update: Update, _context: CallbackContext):
+async def _start(update: Update, _context: CallbackContext):
     """Handle /start command"""
     user = update.effective_user
-    update.message.reply_text(f'Hi {user.first_name}! To use me, just invite me to your group!')
-    update.message.reply_text('I\'ll send this reply to all new users who join the group:')
+    await update.message.reply_text(f'Hi {user.first_name}! To use me, just invite me to your group!')
+    await update.message.reply_text('I\'ll send this reply to all new users who join the group:')
 
     logging.info('Sending WELCOME to %s (%d)', user.username, user.id)
 
-    reply_welcome(update.message)
+    for message in reply_welcome(update.message):
+        await message
 
 
 @command_handler('brushes')
-def _brushes(update: Update, _context: CallbackContext):
+async def _brushes(update: Update, _context: CallbackContext):
     """Handle /brushes command"""
     user = update.effective_user
     chat = update.effective_chat
-    if chat.type != 'private' and chat.get_member(user.id).status not in CHAT_MEMBER_ADMINISTRATORS:
+    if not await is_chat_admin(update):
         logging.warning('%s (%d) tried to use /brushes admin command in %s (%d)', user.username, user.id, chat.username, chat.id)
         return
 
-    update.message.chat.send_message(textwrap.dedent('''\
+    await update.message.chat.send_message(textwrap.dedent('''\
         Want to see the bushes Carni uses to draw all of their amazing artwork, go here and it will all be elucidated 😄
 
         https://www.deviantart.com/carnival/art/B-B-B-BRUSH-MAGEDDON-726046698 🖌️
@@ -72,15 +82,15 @@ def _brushes(update: Update, _context: CallbackContext):
 
 
 @command_handler('freeapple')
-def _freeapple(update: Update, _context: CallbackContext):
+async def _freeapple(update: Update, _context: CallbackContext):
     """Handle /freeapple command"""
     user = update.effective_user
     chat = update.effective_chat
-    if chat.type != 'private' and chat.get_member(user.id).status not in CHAT_MEMBER_ADMINISTRATORS:
+    if not await is_chat_admin(update):
         logging.warning('%s (%d) tried to use /freeapple admin command in %s (%d)', user.username, user.id, chat.username, chat.id)
         return
 
-    update.message.chat.send_message(textwrap.dedent('''\
+    await update.message.chat.send_message(textwrap.dedent('''\
         A reference you <i>saaaaaay</i>?
 
         Here is Free Apple since we reference it so often this is needed https://www.youtube.com/watch?v=_F9EMbkvLBQ 🍎
@@ -88,15 +98,15 @@ def _freeapple(update: Update, _context: CallbackContext):
 
 
 @command_handler('hogarth')
-def _hogarth(update: Update, _context: CallbackContext):
+async def _hogarth(update: Update, _context: CallbackContext):
     """Handle /hogarth command"""
     user = update.effective_user
     chat = update.effective_chat
-    if chat.type != 'private' and chat.get_member(user.id).status not in CHAT_MEMBER_ADMINISTRATORS:
+    if not await is_chat_admin(update):
         logging.warning('%s (%d) tried to use /hogarth admin command in %s (%d)', user.username, user.id, chat.username, chat.id)
         return
 
-    update.message.chat.send_message(textwrap.dedent('''\
+    await update.message.chat.send_message(textwrap.dedent('''\
         M.C.A Hogarth is a SERIOUSLY rad Author!!
         The first book in their Dreamhealers series is a great place to start! ❤️
 
@@ -105,15 +115,15 @@ def _hogarth(update: Update, _context: CallbackContext):
 
 
 @command_handler('twrp')
-def _twrp(update: Update, _context: CallbackContext):
+async def _twrp(update: Update, _context: CallbackContext):
     """Handle /twrp command"""
     user = update.effective_user
     chat = update.effective_chat
-    if chat.type != 'private' and chat.get_member(user.id).status not in CHAT_MEMBER_ADMINISTRATORS:
+    if not await is_chat_admin(update):
         logging.warning('%s (%d) tried to use /twrp admin command in %s (%d)', user.username, user.id, chat.username, chat.id)
         return
 
-    update.message.chat.send_message(textwrap.dedent('''\
+    await update.message.chat.send_message(textwrap.dedent('''\
         YA'LL HAVE GON' n DONE IT now!
         GON' N SAID THE MAGIC WORK!
         <b>TWRP</b> (or 'Tupperware Remix Party') just so happens to be, the BESTEREST Band to ever exist, and can check out <a href="https://twrp.bandcamp.com">thier music here!</a>
@@ -123,7 +133,7 @@ def _twrp(update: Update, _context: CallbackContext):
 
 
 @message_handler(filters.StatusUpdate.NEW_CHAT_MEMBERS)
-def _on_new_chat_members(update: Update, _context: CallbackContext):
+async def _on_new_chat_members(update: Update, _context: CallbackContext):
     """Send "Vrrrrr'elcome!" when a new user joins the chat"""
     chat = update.effective_chat
     logging.info(
@@ -150,9 +160,9 @@ def schedule_cleanup(chat: telegram.Chat, messages: List[telegram.Message], uids
     """Schedule cleanup of unneeded messages"""
     uids = uids.copy()
 
-    def _cleanup(_context):
+    async def _cleanup(_context):
         for uid in list(uids):
-            chat_member = chat.get_member(uid)
+            chat_member = await chat.get_member(uid)
             if chat_member.status in CHAT_MEMBER_GONERS:
                 uids.remove(uid)
 
