@@ -126,7 +126,7 @@ async def _twrp(update: Update, _context: CallbackContext):
     await update.message.chat.send_message(textwrap.dedent('''\
         YA'LL HAVE GON' n DONE IT now!
         GON' N SAID THE MAGIC WORK!
-        <b>TWRP</b> (or 'Tupperware Remix Party') just so happens to be, the BESTEREST Band to ever exist, and can check out <a href="https://twrp.bandcamp.com">thier music here!</a>
+        <b>TWRP</b> (or 'Tupperware Remix Party') just so happens to be, the BESTEREST Band to ever exist, and can check out <a href="https://twrp.bandcamp.com">their music here!</a>
 
         (can highly reccomend <a href="https://twrp.bandcamp.com/track/phantom-racer-feat-the-protomen">this UTTER BANGER</a> to start with!) ❤️
     '''), parse_mode=ParseMode.HTML)
