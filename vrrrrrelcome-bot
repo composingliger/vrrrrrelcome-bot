@@ -52,6 +52,7 @@ async def is_chat_admin(update: Update):
 
     return user.id in (admin.user.id for admin in await chat.get_administrators())
 
+
 @command_handler('start', filters=ChatType.PRIVATE)
 async def _start(update: Update, _context: CallbackContext):
     """Handle /start command"""
@@ -59,10 +60,9 @@ async def _start(update: Update, _context: CallbackContext):
     await update.message.reply_text(f'Hi {user.first_name}! To use me, just invite me to your group!')
     await update.message.reply_text('I\'ll send this reply to all new users who join the group:')
 
-    logging.info('Sending WELCOME to %s (%d)', user.username, user.id)
+    logging.info('Sending test WELCOME to %s (%d)', user.username, user.id)
 
-    for message in reply_welcome(update.message):
-        await message
+    await reply_welcome(update.message)
 
 
 @command_handler('brushes')
@@ -143,16 +143,16 @@ async def _on_new_chat_members(update: Update, _context: CallbackContext):
         chat.title,
         chat.id)
 
-    messages = reply_welcome(update.message)
+    messages = await reply_welcome(update.message)
     uids = {u.id for u in update.message.new_chat_members}
     schedule_cleanup(update.message.chat, messages, uids)
 
 
-def reply_welcome(message: telegram.Message):
+async def reply_welcome(message: telegram.Message):
     """Send WELCOME reply to message"""
     return [
-        message.reply_sticker(WELCOME_STICKER),
-        message.reply_voice(WELCOME_VOICE, quote=True, caption=WELCOME_CAPTION, parse_mode=ParseMode.HTML)
+        await message.reply_sticker(WELCOME_STICKER),
+        await message.reply_voice(WELCOME_VOICE, quote=True, caption=WELCOME_CAPTION, parse_mode=ParseMode.HTML)
     ]
 
 
@@ -170,9 +170,9 @@ def schedule_cleanup(chat: telegram.Chat, messages: List[telegram.Message], uids
             # All users referenced in this message have left the chat!
             for message in messages:
                 logging.info('Removing message %d (all users left)', message.message_id)
-                message.delete()
+                await message.delete()
 
-            chat.send_message(
+            await chat.send_message(
                 '<i>"Well, <b>thief!</b> I smell you, I hear your breath, I feel your air. Where are you?"</i> 🐲',
                 parse_mode=ParseMode.HTML,
                 disable_notification=True)
