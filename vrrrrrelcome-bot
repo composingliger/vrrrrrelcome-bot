@@ -183,6 +183,9 @@ def schedule_cleanup(chat: telegram.Chat, messages: List[telegram.Message], uids
 def main():
     logging.basicConfig(level=logging.INFO)
 
+    # Spams log every HTTP request
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
