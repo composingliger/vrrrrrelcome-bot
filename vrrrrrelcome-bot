@@ -5,12 +5,12 @@ import datetime
 import logging
 import os
 import textwrap
-from typing import Set, List
+from typing import Set, List, Optional
 
 import telegram
-from telegram import Update, ChatMember
+from telegram import Chat, ChatMember, ChatMemberUpdated, Update
 from telegram.constants import ParseMode
-from telegram.ext import Application, CallbackContext, MessageHandler, filters, CommandHandler
+from telegram.ext import Application, CallbackContext, MessageHandler, filters, CommandHandler, ChatMemberHandler
 from telegram.ext.filters import BaseFilter, ChatType
 
 TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
@@ -39,6 +39,13 @@ def message_handler(filter: BaseFilter, **kwargs):
     """Decorator for registering a `MessageHandler`."""
     def _register(func):
         application.add_handler(MessageHandler(filter, func, **kwargs))
+    return _register
+
+
+def chat_member_handler(*args, **kwargs):
+    """Decorator for registering a `ChatMemberHandler`."""
+    def _register(func):
+        application.add_handler(ChatMemberHandler(func, *args, **kwargs))
     return _register
 
 
@@ -132,20 +139,65 @@ async def _twrp(update: Update, _context: CallbackContext):
     '''), parse_mode=ParseMode.HTML)
 
 
-@message_handler(filters.StatusUpdate.NEW_CHAT_MEMBERS)
-async def _on_new_chat_members(update: Update, _context: CallbackContext):
+@chat_member_handler(ChatMemberHandler.CHAT_MEMBER)
+async def _on_chat_member(update: Update, _context: CallbackContext):
     """Send "Vrrrrr'elcome!" when a new user joins the chat"""
+    user = update.chat_member.new_chat_member.user
     chat = update.effective_chat
-    logging.info(
-        'Sending WELCOME to %s in %s %r (%d)',
-        ', '.join(f'{u.username!r} ({u.id})' for u in update.message.new_chat_members),
-        chat.type,
-        chat.title,
-        chat.id)
 
-    messages = await reply_welcome(update.message)
-    uids = {u.id for u in update.message.new_chat_members}
-    schedule_cleanup(update.message.chat, messages, uids)
+    result = extract_status_change(update.chat_member)
+    if result is None:
+        return
+
+    was_member, is_member = result
+
+    if not was_member and is_member:
+        logging.info(
+            'Sending WELCOME to %s (%d) in %s %r (%d)',
+            user.username,
+            user.id,
+            chat.type,
+            chat.title,
+            chat.id)
+
+        messages = await reply_welcome(update.message)
+        uids = {u.id for u in update.message.new_chat_members}
+        schedule_cleanup(update.message.chat, messages, uids)
+
+    elif was_member and not is_member:
+        logging.info(
+            '%s (%d) left %s %r (%d)',
+            user.username,
+            user.id,
+            chat.type,
+            chat.title,
+            chat.id)
+
+
+def extract_status_change(chat_member_update: ChatMemberUpdated) -> Optional[tuple[bool, bool]]:
+    """Takes a ChatMemberUpdated instance and extracts whether the 'old_chat_member' was a member
+    of the chat and whether the 'new_chat_member' is a member of the chat. Returns None, if
+    the status didn't change.
+    """
+    status_change = chat_member_update.difference().get("status")
+    old_is_member, new_is_member = chat_member_update.difference().get("is_member", (None, None))
+
+    if status_change is None:
+        return None
+
+    old_status, new_status = status_change
+    was_member = old_status in [
+        ChatMember.MEMBER,
+        ChatMember.OWNER,
+        ChatMember.ADMINISTRATOR,
+    ] or (old_status == ChatMember.RESTRICTED and old_is_member is True)
+    is_member = new_status in [
+        ChatMember.MEMBER,
+        ChatMember.OWNER,
+        ChatMember.ADMINISTRATOR,
+    ] or (new_status == ChatMember.RESTRICTED and new_is_member is True)
+
+    return was_member, is_member
 
 
 async def reply_welcome(message: telegram.Message):
