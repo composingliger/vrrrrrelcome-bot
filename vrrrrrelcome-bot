@@ -67,7 +67,7 @@ async def _start(update: Update, _context: CallbackContext):
     await update.message.reply_text(f'Hi {user.first_name}! To use me, just invite me to your group!')
     await update.message.reply_text('I\'ll send this reply to all new users who join the group:')
 
-    logging.info('Sending test WELCOME to %s (%d)', user.username, user.id)
+    logging.info('Sending test WELCOME to %s', user_to_str(user))
 
     await reply_welcome(update.message)
 
@@ -78,7 +78,8 @@ async def _brushes(update: Update, _context: CallbackContext):
     user = update.effective_user
     chat = update.effective_chat
     if not await is_chat_admin(update):
-        logging.warning('%s (%d) tried to use /brushes admin command in %s (%d)', user.username, user.id, chat.username, chat.id)
+        logging.warning('%s tried to use /brushes admin command in %s',
+                        user_to_str(user), chat_to_str(chat))
         return
 
     await update.message.chat.send_message(textwrap.dedent('''\
@@ -94,7 +95,8 @@ async def _freeapple(update: Update, _context: CallbackContext):
     user = update.effective_user
     chat = update.effective_chat
     if not await is_chat_admin(update):
-        logging.warning('%s (%d) tried to use /freeapple admin command in %s (%d)', user.username, user.id, chat.username, chat.id)
+        logging.warning('%s tried to use /freeapple admin command in %s',
+                        user_to_str(user), chat_to_str(chat))
         return
 
     await update.message.chat.send_message(textwrap.dedent('''\
@@ -110,7 +112,8 @@ async def _hogarth(update: Update, _context: CallbackContext):
     user = update.effective_user
     chat = update.effective_chat
     if not await is_chat_admin(update):
-        logging.warning('%s (%d) tried to use /hogarth admin command in %s (%d)', user.username, user.id, chat.username, chat.id)
+        logging.warning('%s tried to use /hogarth admin command in %s',
+                        user_to_str(user), chat_to_str(chat))
         return
 
     await update.message.chat.send_message(textwrap.dedent('''\
@@ -127,7 +130,8 @@ async def _twrp(update: Update, _context: CallbackContext):
     user = update.effective_user
     chat = update.effective_chat
     if not await is_chat_admin(update):
-        logging.warning('%s (%d) tried to use /twrp admin command in %s (%d)', user.username, user.id, chat.username, chat.id)
+        logging.warning('%s tried to use /twrp admin command in %s',
+                        user_to_str(user), chat_to_str(chat))
         return
 
     await update.message.chat.send_message(textwrap.dedent('''\
@@ -153,25 +157,29 @@ async def _on_chat_member(update: Update, _context: CallbackContext):
 
     if not was_member and is_member:
         logging.info(
-            'Sending WELCOME to %s (%d) in %s %r (%d)',
-            user.username,
-            user.id,
-            chat.type,
-            chat.title,
-            chat.id)
+            'Sending WELCOME to %s in %s',
+            user_to_str(user),
+            chat_to_str(chat))
 
-        messages = await reply_welcome(update.message)
-        uids = {u.id for u in update.message.new_chat_members}
-        schedule_cleanup(update.message.chat, messages, uids)
+        messages = await reply_welcome(update.effective_chat)
+        schedule_cleanup(update.message.chat, messages, {user.id})
 
     elif was_member and not is_member:
         logging.info(
-            '%s (%d) left %s %r (%d)',
-            user.username,
-            user.id,
-            chat.type,
-            chat.title,
-            chat.id)
+            '%s left %s',
+            user_to_str(user),
+            chat_to_str(chat))
+
+
+def user_to_str(user: telegram.User):
+    if user.username:
+        return f"{user.full_name} @{user.username} ({user.id})"
+    else:
+        return f"{user.full_name} ({user.id})"
+
+
+def chat_to_str(chat: telegram.Chat):
+    return f"{chat.type} {chat.title!r} ({chat.id})"
 
 
 def extract_status_change(chat_member_update: ChatMemberUpdated) -> Optional[tuple[bool, bool]]:
