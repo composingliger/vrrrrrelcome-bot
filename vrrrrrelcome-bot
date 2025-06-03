@@ -19,7 +19,7 @@ DATA_DIR = os.environ.get('DATA_DIR', '.')
 WELCOME_STICKER = 'CAACAgEAAxkBAAEDkithyh9aAAFwZEd-9pH21_Xcwom75wMAAhQCAAKi_lBGS70gXpVwuZYjBA'
 # Voice: data/welcome.ogg
 WELCOME_VOICE = 'AwACAgEAAxkDAAIBHGO-Qi_5GCEfG_ep6-IH-aTxS3hQAALNBAACkVT4RaAPWsx_u4ClLQQ'
-WELCOME_CAPTION = "<i>Vrrrr</i> 'ELCOME! 😸"
+WELCOME_CAPTION = "<i>Vrrrr</i> 'ELCOME {}! 😸"
 RECENT_DURATION = datetime.timedelta(minutes=6)
 CHAT_MEMBER_GONERS = {telegram.ChatMember.BANNED, telegram.ChatMember.LEFT}
 
@@ -63,13 +63,14 @@ async def is_chat_admin(update: Update):
 @command_handler('start', filters=ChatType.PRIVATE)
 async def _start(update: Update, _context: CallbackContext):
     """Handle /start command"""
+    chat = update.effective_chat
     user = update.effective_user
     await update.message.reply_text(f'Hi {user.first_name}! To use me, just invite me to your group!')
     await update.message.reply_text('I\'ll send this reply to all new users who join the group:')
 
     logging.info('Sending test WELCOME to %s', user_to_str(user))
 
-    await reply_welcome(update.message)
+    await reply_welcome(chat, user)
 
 
 @command_handler('brushes')
@@ -161,7 +162,7 @@ async def _on_chat_member(update: Update, _context: CallbackContext):
             user_to_str(user),
             chat_to_str(chat))
 
-        messages = await reply_welcome(update.effective_chat)
+        messages = await reply_welcome(chat, user)
         schedule_cleanup(update.message.chat, messages, {user.id})
 
     elif was_member and not is_member:
@@ -208,11 +209,12 @@ def extract_status_change(chat_member_update: ChatMemberUpdated) -> Optional[tup
     return was_member, is_member
 
 
-async def reply_welcome(message: telegram.Message):
-    """Send WELCOME reply to message"""
+async def reply_welcome(chat: telegram.Chat, user: telegram.User):
+    """Send WELCOME reply to chat"""
+    caption = WELCOME_CAPTION.format(user.mention_html())
     return [
-        await message.reply_sticker(WELCOME_STICKER),
-        await message.reply_voice(WELCOME_VOICE, quote=True, caption=WELCOME_CAPTION, parse_mode=ParseMode.HTML)
+        await chat.send_sticker(WELCOME_STICKER),
+        await chat.send_voice(WELCOME_VOICE, caption=caption, parse_mode=ParseMode.HTML)
     ]
 
 
